@@ -76,9 +76,9 @@ def main():
                                                    pin_memory=True)
     elif config.data_loader_type == 'dali':
         train_loader = cifar10.get_cifar_iter_dali(type='train', image_dir=config.data_path,
-                                                   batch_size=config.batch_size, num_threads=config.works)
+                                                   batch_size=config.batch_size, num_threads=config.workers)
         valid_loader = cifar10.get_cifar_iter_dali(type='val', image_dir=config.data_path,
-                                                 batch_size=config.batch_size, num_threads=config.works)
+                                                 batch_size=config.batch_size, num_threads=config.workers)
 
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, config.epochs)
