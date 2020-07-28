@@ -75,6 +75,8 @@ class AugmentConfig(BaseConfig):
                             default=0.2, help='drop path prob')
         parser.add_argument('--genotype', type=str,
                             default=None, help='genotype of nasnet')
+        parser.add_argument('--data_loader_type', type=str,
+                            default='torch', help='dali or torch')
         return parser
 
     def __init__(self):
