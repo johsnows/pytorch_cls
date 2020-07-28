@@ -36,7 +36,7 @@ class HybridTrainPipe_CIFAR(Pipeline):
 
     def iter_setup(self):
         (images, labels) = self.iterator.next()
-        self.feed_input(self.jpegs, images)
+        self.feed_input(self.jpegs, images, layeout="HWC")
         self.feed_input(self.labels, labels)
 
     def define_graph(self):
@@ -66,7 +66,7 @@ class HybridValPipe_CIFAR(Pipeline):
 
     def iter_setup(self):
         (images, labels) = self.iterator.next()
-        self.feed_input(self.jpegs, images)  # can only in HWC order
+        self.feed_input(self.jpegs, images, layout="HWC")  # can only in HWC order
         self.feed_input(self.labels, labels)
 
     def define_graph(self):
