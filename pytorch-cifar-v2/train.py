@@ -23,6 +23,10 @@ writer.add_text('config', config.as_markdown(), 0)
 logger = utils.get_logger(os.path.join(config.path, "logger.log"))
 config.print_params(logger.info)
 
+def get_iterator_length(data_loader):
+    _size = len(data_loader) if isinstance(data_loader, torch.utils.data.DataLoader) \
+        else int(data_loader._size / data_loader.batch_size + 1)
+    return _size
 
 def main():
     logger.info("Logger is set - training start")
@@ -93,7 +97,8 @@ def main():
         train(train_loader, model, optimizer, criterion, epoch)
 
         # validation
-        cur_step = (epoch+1) * len(train_loader)
+        _size = get_iterator_length(train_loader)
+        cur_step = (epoch+1) * _size
         top1 = validate(valid_loader, model, criterion, epoch, cur_step)
         lr_scheduler.step()
         # save
@@ -115,7 +120,8 @@ def train(train_loader, model, optimizer, criterion, epoch):
     top5 = utils.AverageMeter()
     losses = utils.AverageMeter()
 
-    cur_step = epoch*len(train_loader)
+    _size = get_iterator_length(train_loader)
+    cur_step = epoch*_size
     cur_lr = optimizer.param_groups[0]['lr']
     logger.info("Epoch {} LR {}".format(epoch, cur_lr))
     writer.add_scalar('train/lr', cur_lr, cur_step)
@@ -141,11 +147,11 @@ def train(train_loader, model, optimizer, criterion, epoch):
         top1.update(prec1.item(), N)
         top5.update(prec5.item(), N)
 
-        if step % config.print_freq == 0 or step == len(train_loader)-1:
+        if step % config.print_freq == 0 or step == _size-1:
             logger.info(
                 "Train: [{:3d}/{}] Step {:03d}/{:03d} Loss {losses.avg:.3f} "
                 "Prec@(1,5) ({top1.avg:.1%}, {top5.avg:.1%})".format(
-                    epoch+1, config.epochs, step, len(train_loader)-1, losses=losses,
+                    epoch+1, config.epochs, step, _size-1, losses=losses,
                     top1=top1, top5=top5))
 
         writer.add_scalar('train/loss', loss.item(), cur_step)
@@ -163,6 +169,7 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
     losses = utils.AverageMeter()
 
     model.eval()
+    _size = get_iterator_length(valid_loader)
 
     with torch.no_grad():
         for step, (X, y) in enumerate(valid_loader):
@@ -178,11 +185,11 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
             top1.update(prec1.item(), N)
             top5.update(prec5.item(), N)
 
-            if step % config.print_freq == 0 or step == len(valid_loader)-1:
+            if step % config.print_freq == 0 or step == _size-1:
                 logger.info(
                     "Valid: [{:3d}/{}] Step {:03d}/{:03d} Loss {losses.avg:.3f} "
                     "Prec@(1,5) ({top1.avg:.1%}, {top5.avg:.1%})".format(
-                        epoch+1, config.epochs, step, len(valid_loader)-1, losses=losses,
+                        epoch+1, config.epochs, step, _size-1, losses=losses,
                         top1=top1, top5=top5))
 
     writer.add_scalar('val/loss', losses.avg, cur_step)
