@@ -128,8 +128,12 @@ def train(train_loader, model, optimizer, criterion, epoch):
 
     model.train()
 
-    for step, (X, y) in enumerate(train_loader):
-        X, y = X.to(device, non_blocking=True), y.to(device, non_blocking=True)
+    for step, data in enumerate(train_loader):
+        if isinstance(train_loader, torch.utils.data.DataLoader):
+            X, y = data[0].cuda(non_blocking=True), data[1].to(device, non_blocking=True)
+        else:
+            X = data[0]["data"].cuda(non_blocking=True)
+            y = data[0]["label"].squeeze().long().cuda(non_blocking=True)
         N = X.size(0)
 
         optimizer.zero_grad()
@@ -172,9 +176,12 @@ def validate(valid_loader, model, criterion, epoch, cur_step):
     _size = get_iterator_length(valid_loader)
 
     with torch.no_grad():
-        for step, (X, y) in enumerate(valid_loader):
-            X, y = X.to(device, non_blocking=True), y.to(
-                device, non_blocking=True)
+        for step, data in enumerate(valid_loader):
+            if isinstance(valid_loader, torch.utils.data.DataLoader):
+                X, y = data[0].cuda(non_blocking=True), data[1].to(device, non_blocking=True)
+            else:
+                X = data[0]["data"].cuda(non_blocking=True)
+                y = data[0]["label"].squeeze().long().cuda(non_blocking=True)
             N = X.size(0)
 
             logits, _ = model(X)
