@@ -9,6 +9,7 @@ import utils
 from models import get_model
 from thop import profile
 import random
+from dali import cifar10, imagenet
 
 
 config = AugmentConfig()
@@ -62,17 +63,23 @@ def main():
     # weights optimizer
     optimizer = torch.optim.SGD(model.parameters(), config.lr, momentum=config.momentum,
                                 weight_decay=config.weight_decay)
+    if config.data_loader_type == 'torch':
+        train_loader = torch.utils.data.DataLoader(train_data,
+                                                   batch_size=config.batch_size,
+                                                   shuffle=True,
+                                                   num_workers=config.workers,
+                                                   pin_memory=True)
+        valid_loader = torch.utils.data.DataLoader(valid_data,
+                                                   batch_size=config.batch_size,
+                                                   shuffle=False,
+                                                   num_workers=config.workers,
+                                                   pin_memory=True)
+    elif config.data_loader_type == 'dali':
+        train_loader = cifar10.get_cifar_iter_dali(type='train', image_dir=config.data_path,
+                                                   batch_size=config.batch_size, num_threads=config.works)
+        valid_loader = cifar10.get_cifar_iter_dali(type='val', image_dir=config.data_path,
+                                                 batch_size=config.batch_size, num_threads=config.works)
 
-    train_loader = torch.utils.data.DataLoader(train_data,
-                                               batch_size=config.batch_size,
-                                               shuffle=True,
-                                               num_workers=config.workers,
-                                               pin_memory=True)
-    valid_loader = torch.utils.data.DataLoader(valid_data,
-                                               batch_size=config.batch_size,
-                                               shuffle=False,
-                                               num_workers=config.workers,
-                                               pin_memory=True)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, config.epochs)
 
